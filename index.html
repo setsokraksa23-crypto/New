@@ -1,0 +1,3406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Delivery & Inventory System - VATTANAC BREWERY CO., LTD</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300;400;500;600;700&display=swap');
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Kantumruy Pro',sans-serif;
+    background:#f0f9ff;
+    color:#1e293b;
+}
+
+.tab-content{
+    display:none;
+}
+
+.tab-content.active{
+    display:block;
+}
+
+.modal{
+    display:none;
+}
+
+.modal.active{
+    display:flex;
+}
+
+/* Scrollbar */
+
+::-webkit-scrollbar{
+    width:8px;
+    height:8px;
+}
+
+::-webkit-scrollbar-track{
+    background:#e0f2fe;
+}
+
+::-webkit-scrollbar-thumb{
+    background:#38bdf8;
+    border-radius:10px;
+}
+
+::-webkit-scrollbar-thumb:hover{
+    background:#0284c7;
+}
+
+
+/* PRINT */
+
+@media print{
+
+    @page{
+        size:A4 portrait;
+        margin:8mm;
+    }
+
+    body *{
+        visibility:hidden!important;
+    }
+
+    #saved-print-area,
+    #saved-print-area *{
+        visibility:visible!important;
+    }
+
+    #saved-print-area{
+        position:absolute;
+        left:0;
+        top:0;
+        width:100%;
+        margin:0;
+        padding:0;
+        background:white;
+        font-family:Arial,sans-serif;
+    }
+
+    .no-print{
+        display:none!important;
+    }
+
+    table{
+        page-break-inside:auto;
+    }
+
+    tr{
+        page-break-inside:avoid;
+        page-break-after:auto;
+    }
+}
+
+</style>
+</head>
+
+
+<body>
+
+<div class="min-h-screen p-3 md:p-6">
+
+<!-- =========================================================
+HEADER
+========================================================= -->
+
+<div class="max-w-7xl mx-auto mb-5">
+
+    <div class="bg-white rounded-xl shadow-md border border-sky-100 p-4">
+
+        <div class="flex flex-col lg:flex-row justify-between gap-4">
+
+            <div>
+
+                <h1 class="text-xl md:text-2xl font-bold text-sky-900">
+                    🚚 Delivery & Inventory System
+                </h1>
+
+                <p class="text-sm text-gray-500 mt-1">
+                    VATTANAC BREWERY CO., LTD
+                </p>
+
+            </div>
+
+
+            <div class="flex flex-wrap gap-2">
+
+                <button
+                    onclick="switchTab('delivery')"
+                    id="btn-tab-delivery"
+                    class="px-4 py-2 bg-sky-900 hover:bg-sky-950 text-white rounded-md font-semibold transition">
+                    📝 Delivery Note
+                </button>
+
+                <button
+                    onclick="switchTab('items')"
+                    id="btn-tab-items"
+                    class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-md font-semibold transition">
+                    📦 Item Master
+                </button>
+
+                <button
+                    onclick="switchTab('report')"
+                    id="btn-tab-report"
+                    class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-md font-semibold transition">
+                    📊 Report
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="max-w-7xl mx-auto">
+
+
+<!-- =========================================================
+DELIVERY NOTE
+========================================================= -->
+
+<div id="tab-delivery" class="tab-content active">
+
+<div class="bg-white p-4 md:p-6 rounded-xl shadow-md border border-sky-100 no-print">
+
+
+<!-- TITLE -->
+
+<div class="flex flex-col md:flex-row justify-between md:items-center gap-3 border-b border-sky-200 pb-4 mb-5">
+
+    <div>
+
+        <h2 class="text-xl font-bold text-sky-800">
+            🧾 ប័ណ្ណដឹកទំនិញ / Delivery Note
+        </h2>
+
+        <p class="text-sm text-gray-500 mt-1">
+            VATTANAC BREWERY CO., LTD
+        </p>
+
+    </div>
+
+
+    <span class="bg-sky-100 text-sky-700 px-4 py-2 rounded-lg font-bold border border-sky-200">
+
+        DN Nº:
+        <span id="dn-display-no"></span>
+
+    </span>
+
+</div>
+
+
+<!-- CUSTOMER -->
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+
+
+    <div>
+
+        <label class="text-xs font-bold text-gray-700">
+            ឈ្មោះនិងកូដ / Customer Name
+        </label>
+
+        <input
+            id="dn-cust-name"
+            class="w-full border border-sky-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 p-2.5 rounded-lg text-sm outline-none"
+            placeholder="Customer Name & Code">
+
+    </div>
+
+
+    <div>
+
+        <label class="text-xs font-bold text-gray-700">
+            កាលបរិច្ឆេទ / Date
+        </label>
+
+        <input
+            type="date"
+            id="dn-date"
+            class="w-full border border-sky-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 p-2.5 rounded-lg text-sm outline-none">
+
+    </div>
+
+
+    <div>
+
+        <label class="text-xs font-bold text-gray-700">
+            DN Nº
+        </label>
+
+        <input
+            id="dn-number"
+            readonly
+            class="w-full border border-sky-200 p-2.5 rounded-lg text-sm bg-sky-50 font-bold text-sky-700">
+
+    </div>
+
+
+    <div>
+
+        <label class="text-xs font-bold text-gray-700">
+            អាសយដ្ឋាន / Address
+        </label>
+
+        <input
+            id="dn-address"
+            class="w-full border border-sky-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 p-2.5 rounded-lg text-sm outline-none"
+            placeholder="Delivery Address">
+
+    </div>
+
+
+    <div>
+
+        <label class="text-xs font-bold text-gray-700">
+            Phone Nº
+        </label>
+
+        <input
+            id="dn-phone"
+            class="w-full border border-sky-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 p-2.5 rounded-lg text-sm outline-none"
+            placeholder="Phone Number">
+
+    </div>
+
+
+    <div>
+
+        <label class="text-xs font-bold text-gray-700">
+            Truck Nº
+        </label>
+
+        <input
+            id="dn-truck"
+            class="w-full border border-sky-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-100 p-2.5 rounded-lg text-sm outline-none"
+            placeholder="Truck Number">
+
+    </div>
+
+</div>
+
+
+<!-- LINE ITEMS -->
+
+<div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-3">
+
+    <h3 class="font-bold text-sky-900">
+        📦 Line Items
+    </h3>
+
+    <button
+        onclick="addDNRow()"
+        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-sm">
+        ➕ Add Row
+    </button>
+
+</div>
+
+
+<div class="overflow-x-auto rounded-lg">
+
+<table class="w-full border-collapse border border-sky-200 text-sm">
+
+<thead>
+
+<tr class="bg-sky-100 text-sky-900">
+
+    <th class="border border-sky-200 p-2">
+        Nº
+    </th>
+
+    <th class="border border-sky-200 p-2 min-w-[230px]">
+        Item Code
+    </th>
+
+    <th class="border border-sky-200 p-2 min-w-[280px]">
+        Description
+    </th>
+
+    <th class="border border-sky-200 p-2 min-w-[90px]">
+        UOM
+    </th>
+
+    <th class="border border-sky-200 p-2 min-w-[110px]">
+        Quantity
+    </th>
+
+    <th class="border border-sky-200 p-2 min-w-[170px]">
+        Remarks
+    </th>
+
+    <th class="border border-sky-200 p-2">
+        #
+    </th>
+
+</tr>
+
+</thead>
+
+<tbody id="dn-items-tbody"></tbody>
+
+</table>
+
+</div>
+
+
+<!-- BUTTONS -->
+
+<div class="flex flex-wrap justify-end gap-2 mt-5">
+
+    <button
+        onclick="saveDeliveryNote(false)"
+        class="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2 rounded-lg font-bold">
+        💾 Save
+    </button>
+
+    <button
+        onclick="saveDeliveryNote(true)"
+        class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg font-bold">
+        🖨️ Save & Print
+    </button>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- =========================================================
+ITEM MASTER
+========================================================= -->
+
+<div id="tab-items" class="tab-content">
+
+<div class="bg-white p-4 md:p-6 rounded-xl shadow-md border border-sky-100">
+
+
+<!-- TITLE -->
+
+<div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-5">
+
+    <div>
+
+        <h2 class="text-xl font-bold text-sky-700">
+            📦 Item Master
+        </h2>
+
+        <p class="text-sm text-gray-500">
+            VATTANAC BREWERY CO., LTD
+        </p>
+
+    </div>
+
+    <span
+        id="item-count"
+        class="bg-sky-100 text-sky-700 px-3 py-1 rounded-full text-sm font-bold">
+        0 Items
+    </span>
+
+</div>
+
+
+<!-- EXCEL IMPORT -->
+
+<div class="mb-6 p-4 bg-sky-50 border border-sky-200 rounded-xl">
+
+    <label class="block text-sm font-bold mb-2 text-sky-900">
+        📥 Import Item Master from Excel
+    </label>
+
+    <div class="flex flex-col md:flex-row gap-2">
+
+        <input
+            type="file"
+            id="excel-file-input"
+            accept=".xlsx,.xls,.csv"
+            class="border border-sky-200 p-2 rounded-lg bg-white flex-1">
+
+        <button
+            onclick="importItemExcel()"
+            class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg font-bold">
+            📥 Upload Excel
+        </button>
+
+    </div>
+
+    <p class="text-xs text-gray-500 mt-2">
+        Headers: Item Nº, DESCRIPTION, UOM, PALLET STORAGE, Remarks
+    </p>
+
+</div>
+
+
+<!-- ADD ITEM -->
+
+<form
+    id="item-form"
+    onsubmit="saveItem(event)"
+    class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 bg-sky-50 p-4 rounded-xl border border-sky-200 mb-6">
+
+
+    <div>
+
+        <label class="text-xs font-bold">
+            Item Code
+        </label>
+
+        <input
+            id="item-no"
+            required
+            class="w-full border border-sky-200 p-2 rounded-lg text-sm"
+            placeholder="310102">
+
+    </div>
+
+
+    <div>
+
+        <label class="text-xs font-bold">
+            Description
+        </label>
+
+        <input
+            id="item-desc"
+            required
+            class="w-full border border-sky-200 p-2 rounded-lg text-sm"
+            placeholder="Product description">
+
+    </div>
+
+
+    <div>
+
+        <label class="text-xs font-bold">
+            UOM
+        </label>
+
+        <input
+            id="item-uom"
+            required
+            class="w-full border border-sky-200 p-2 rounded-lg text-sm"
+            placeholder="CTN">
+
+    </div>
+
+
+    <div>
+
+        <label class="text-xs font-bold">
+            Pallet Storage
+        </label>
+
+        <input
+            id="item-pallet"
+            class="w-full border border-sky-200 p-2 rounded-lg text-sm"
+            placeholder="150">
+
+    </div>
+
+
+    <div>
+
+        <label class="text-xs font-bold">
+            Remarks
+        </label>
+
+        <input
+            id="item-remarks"
+            class="w-full border border-sky-200 p-2 rounded-lg text-sm"
+            placeholder="Remarks">
+
+    </div>
+
+
+    <div class="md:col-span-2 lg:col-span-5 flex justify-end">
+
+        <button
+            type="submit"
+            class="bg-sky-600 hover:bg-sky-700 text-white px-6 py-2 rounded-lg font-bold">
+            ➕ Add / Update Item
+        </button>
+
+    </div>
+
+</form>
+
+
+<!-- SEARCH -->
+
+<div class="flex flex-col md:flex-row gap-2 mb-4">
+
+    <input
+        id="item-search"
+        oninput="renderItemMaster()"
+        placeholder="🔍 Search Item Code or Description..."
+        class="flex-1 border border-sky-200 p-2.5 rounded-lg text-sm">
+
+    <button
+        onclick="openItemSearch()"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-bold">
+        🔍 Search Item
+    </button>
+
+</div>
+
+
+<!-- ITEM TABLE -->
+
+<div class="overflow-x-auto rounded-lg">
+
+<table class="w-full border-collapse border border-sky-200 text-sm">
+
+<thead>
+
+<tr class="bg-sky-100 text-sky-900">
+
+    <th class="border border-sky-200 p-2">
+        Item Code
+    </th>
+
+    <th class="border border-sky-200 p-2">
+        Description
+    </th>
+
+    <th class="border border-sky-200 p-2">
+        UOM
+    </th>
+
+    <th class="border border-sky-200 p-2">
+        Pallet Storage
+    </th>
+
+    <th class="border border-sky-200 p-2">
+        Remarks
+    </th>
+
+    <th class="border border-sky-200 p-2">
+        Action
+    </th>
+
+</tr>
+
+</thead>
+
+<tbody id="item-table-body"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- =========================================================
+REPORT
+========================================================= -->
+
+<div id="tab-report" class="tab-content">
+
+<div class="bg-white p-4 md:p-6 rounded-xl shadow-md border border-sky-100">
+
+
+<!-- TITLE -->
+
+<div class="flex flex-col lg:flex-row justify-between lg:items-center gap-3 mb-5">
+
+    <div>
+
+        <h2 class="text-xl font-bold text-sky-800">
+            📊 Report Listing by Items by DN
+        </h2>
+
+        <p class="text-sm text-gray-500">
+            VATTANAC BREWERY CO., LTD
+        </p>
+
+    </div>
+
+
+    <div class="flex flex-wrap gap-2">
+
+        <!-- CLEAR -->
+
+        <button
+            onclick="clearReportSearch()"
+            class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-bold">
+            🧹 Clear
+        </button>
+
+
+        <!-- EXPORT EXCEL -->
+
+        <button
+            onclick="exportReportToExcel()"
+            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold">
+            📥 Excel
+        </button>
+
+
+        <!-- EXPORT PDF -->
+
+        <button
+            onclick="exportReportToPDF()"
+            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold">
+            📄 PDF
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- SEARCH -->
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+
+    <input
+        id="report-search"
+        oninput="reportPage=1;renderReport()"
+        placeholder="🔍 Search DN / Customer / Item..."
+        class="border border-sky-200 p-2.5 rounded-lg text-sm md:col-span-2">
+
+
+    <select
+        id="report-page-size"
+        onchange="reportPage=1;renderReport()"
+        class="border border-sky-200 p-2.5 rounded-lg text-sm">
+
+        <option value="10">10 Rows</option>
+        <option value="20">20 Rows</option>
+        <option value="50">50 Rows</option>
+        <option value="100">100 Rows</option>
+
+    </select>
+
+</div>
+
+
+<!-- REPORT TABLE -->
+
+<div class="overflow-x-auto rounded-lg">
+
+<table class="w-full border-collapse border border-sky-200 text-xs">
+
+<thead>
+
+<tr class="bg-sky-100 text-sky-900">
+
+    <th class="border border-sky-200 p-2">
+        Nº
+    </th>
+
+    <th class="border border-sky-200 p-2">
+        Date
+    </th>
+
+    <th class="border border-sky-200 p-2">
+        DN Nº
+    </th>
+
+    <th class="border border-sky-200 p-2">
+        Customer
+    </th>
+
+    <th class="border border-sky-200 p-2">
+        Item Code
+    </th>
+
+    <th class="border border-sky-200 p-2">
+        Description
+    </th>
+
+    <th class="border border-sky-200 p-2">
+        UOM
+    </th>
+
+    <th class="border border-sky-200 p-2">
+        Qty
+    </th>
+
+    <th class="border border-sky-200 p-2">
+        Remarks
+    </th>
+
+    <th class="border border-sky-200 p-2">
+        Action
+    </th>
+
+</tr>
+
+</thead>
+
+<tbody id="report-tbody"></tbody>
+
+</table>
+
+</div>
+
+
+<!-- PAGINATION -->
+
+<div class="flex flex-col md:flex-row justify-between md:items-center gap-3 mt-5">
+
+    <div
+        id="report-info"
+        class="text-sm text-gray-600">
+    </div>
+
+
+    <div class="flex gap-2 items-center">
+
+        <button
+            onclick="changeReportPage(-1)"
+            class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+            ◀ Previous
+        </button>
+
+
+        <span
+            id="report-page-label"
+            class="px-4 py-2 font-bold text-sky-700">
+        </span>
+
+
+        <button
+            onclick="changeReportPage(1)"
+            class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+            Next ▶
+        </button>
+
+    </div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- =========================================================
+ITEM SEARCH MODAL
+========================================================= -->
+
+<div
+    id="item-search-modal"
+    class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
+
+
+<div class="bg-white rounded-xl shadow-xl w-full max-w-5xl mx-4 overflow-hidden">
+
+
+<div class="flex justify-between items-center p-4 border-b border-sky-200">
+
+    <h3 class="text-lg font-bold text-sky-700">
+        🔍 Search Item Master
+    </h3>
+
+
+    <button
+        onclick="closeItemSearch()"
+        class="text-gray-500 hover:text-red-600 text-xl">
+        ✕
+    </button>
+
+</div>
+
+
+<div class="p-4">
+
+    <input
+        id="item-search-modal-input"
+        type="text"
+        oninput="searchItemModal()"
+        placeholder="🔍 Search Item Code or Description..."
+        class="w-full border border-sky-200 p-2.5 rounded-lg mb-4">
+
+
+    <div class="overflow-x-auto max-h-96 overflow-y-auto">
+
+        <table class="w-full border-collapse border border-sky-200 text-sm">
+
+            <thead class="bg-sky-100 sticky top-0">
+
+                <tr>
+
+                    <th class="border border-sky-200 p-2">
+                        Item Code
+                    </th>
+
+                    <th class="border border-sky-200 p-2">
+                        Description
+                    </th>
+
+                    <th class="border border-sky-200 p-2">
+                        UOM
+                    </th>
+
+                    <th class="border border-sky-200 p-2">
+                        Pallet Storage
+                    </th>
+
+                    <th class="border border-sky-200 p-2">
+                        Remarks
+                    </th>
+
+                    <th class="border border-sky-200 p-2">
+                        Action
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="item-search-result"></tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- =========================================================
+PRINT AREA
+========================================================= -->
+
+<div
+    id="saved-print-area"
+    class="hidden">
+</div>
+
+
+<script>
+
+/* =========================================================
+STORAGE
+========================================================= */
+
+let items = JSON.parse(
+    localStorage.getItem("delivery_items") || "[]"
+);
+
+let deliveryNotes = JSON.parse(
+    localStorage.getItem("delivery_notes") || "[]"
+);
+
+let reportPage = 1;
+
+let currentSearchRow = null;
+
+
+/* =========================================================
+DEFAULT ITEMS
+========================================================= */
+
+const defaultItems = [
+
+["310102","Beer Krud Pilsner CAN (Std) 330ML x 24","CTN","150",""],
+["310105","Beer Krud Pilsner CAN (NCP) 330ML x 24","CTN","150",""],
+["310108","Beer Vattanac Premium CAN (Std) 330ML x 24","CTN","150",""],
+["310114","Beer Dragon Premium Dark CAN (Std) 330ML x 24","CTN","150",""],
+["310133","Beer Vattanac Premium Pint 330ML x 24","CTN","150",""],
+["310135","Beer Dragon Premium Dark Pint 330ML x 24","CTN","150",""],
+["310138","Beer Krud Pilsner Pint 330ML x 24","CTN","150",""],
+["310143","Beer Krud Pilsner DRAFT 25L","KEG","150",""],
+["310145","Beer Krud Pilsner DRAFT 15L","KEG","150",""],
+["310147","Beer Vattanac Premium DRAFT 20L","KEG","150",""],
+["310148","Beer Vattanac Premium DRAFT 15L","KEG","150",""],
+["310150","Beer Dragon Premium Dark DRAFT 20L","KEG","150",""],
+["310151","Beer Dragon Premium Dark DRAFT 15L","KEG","150",""],
+["310158","Beer Vattanac Premium Light Pint 330ML x 24","CTN","150",""],
+["310159","Beer Vattanac Premium Light DRAFT 15L","KEG","150",""],
+["310169","Beer Vattanac Premium Light DRAFT 20L","KEG","150",""],
+["310171","Beer Vattanac Premium Light CAN (NCP) 330ML x 24","CTN","150",""],
+["310172","Beer Vattanac Premium Light CAN (Std) 330ML x 24","CTN","150",""],
+["310178","Beer Dragon Premium Dark CAN (NCP) 330ML x 24","CTN","150",""],
+["310179","Beer Krud Lite Premium Pint 330ML x 24","CTN","150",""],
+["310181","Beer Krud Lite Premium DRAFT 20L","KEG","150",""],
+["310182","Beer Krud Lite Premium Draft 15L","KEG","150",""],
+["310188","Beer Dragon Premium Dark Nitro Pint 330mlx24","CTN","150",""],
+["310191","Beer Vattanac Lagerade CAN (NCP) 330ML x 24","CTN","150",""],
+["310192","Beer Vattanac Lagerade Pint 330ML x 24","CTN","150",""],
+["310194","Beer Vattanac Lagerade CAN (Std) 330ML x 24","CTN","150",""],
+["310199","Beer Krud Lite Premium Can (NCP) 330mlx24","CTN","150",""],
+["310200","Beer Krud Lite Premium Can (Std) 330mlx24","CTN","150",""],
+["310202","Beer Dragon Premium Dark Silver CAN (Std) 330ML x 24","CTN","150",""],
+["310203","Beer Dragon Premium Dark Silver CAN (NCP) 330ML x 24","CTN","150",""],
+["310205","Beer Dragon Premium Dark Silver Pint 330ML x 24","CTN","150",""],
+["310207","Beer Dragon Premium Dark Silver DRAFT 15L","KEG","150",""],
+["310208","Beer Vattanac All Malt CAN (NCP) 330ML x24","CTN","150",""],
+["310209","Beer Vattanac All Malt CAN (Std) 330ML x 24","CTN","150",""],
+["310210","Beer Vattanac All Malt Pint 330ML x 24","CTN","150",""],
+["310212","Beer Vattanac All Malt DRAFT 15L","KEG","150",""],
+["310213","Beer Vattanac All Malt DRAFT 20L","KEG","150",""],
+["310214","Beer Vattanac Premium Light CAN (NCP) 250ML x 24","CTN","150",""],
+["310216","Vattanac All Free CAN (NCP) 330ML x24","CTN","150",""],
+["310219","Vattanac All Free Pint 330ML x 24","CTN","150",""],
+["310220","Beer Dragon Nitro CAN (NCP) 250ML x 24","CTN","150",""],
+
+["320000","Krud Energy Drink (NCP) 250 mlx24","CTN","150",""],
+["320006","Krud ICE Energy (NCP) 250 mlx24","CTN","150",""],
+["320008","V-ACTIVE Green (NCP) 250 sleek x24","CTN","150",""],
+["320009","V-ACTIVE Red (NCP) 250 sleek x24","CTN","150",""],
+["320012","V-ACTIVE Sports Drink (NCP) 330 sleek x24","CTN","150",""],
+["320013","V-ACTIVE Sports Drink (Std) 330 sleek x24","CTN","150",""],
+["320029","V-ACTIVE Sports Red (NCP) 330 sleek x24","CTN","150",""],
+["320030","V-ACTIVE Sports Green (NCP) 330 sleek x24","CTN","150",""],
+["320033","V-ACTIVE Sports Yellow (NCP) 330 sleek x24","CTN","150",""],
+["320034","V-ACTIVE Sports Yellow (Std) 330 sleek x24","CTN","150",""],
+["320036","V-ACTIVE Sports Drink CSD 350mlx24-PET","TRAY","150",""],
+["320037","V-ACTIVE Sports Drink Still 500mlx24-PET","CTN","150",""],
+["320038","V-ACTIVE Sports Drink CSD 600mlx24-PET","CTN","150",""],
+["320040","V-ACTIVE Sports Yellow CSD 350mlx24-PET","TRAY","150",""],
+["320041","V-ACTIVE Sports Yellow Still 500mlx24-PET","CTN","150",""],
+["320042","V-ACTIVE Sports Yellow CSD 600mlx24-PET","CTN","150",""],
+["320044","V-COLA CSD 350mlx24-PET","TRAY","150",""],
+["320045","V-COLA CAN (Std) 330ML x 24","CTN","150",""],
+["320046","V-COLA CSD 600mlx24-PET","CTN","150",""],
+["320047","V-COLA CSD 1000mlx6-PET","CTN","150",""],
+["321000","Krud COLA Energy Drink (NCP) 250 mlx24","CTN","150",""],
+["321002","Krud Pure Charge Energy Drink (NCP) 250 mlx24","CTN","150",""],
+["321004","Dragon Energy (NCP) 250 mlx24","CTN","150",""],
+["321006","Red Dragon Energy (NCP) 250 mlx24","CTN","150",""],
+
+["330002","V-ACTIVE Water 250ml x24","TRAY","150",""],
+["330003","V-ACTIVE Water 350mlx24","CTN","150",""],
+["330004","V-ACTIVE Water 500mlx24","CTN","150",""],
+["330005","V-ACTIVE Water 1500mlx6","CTN","150",""],
+
+["320048","Krud Soda Water Pint 330ml x 24","CTN","150",""],
+["320050","V-LEMON TEA 500mlx24-PET","CTN","150",""],
+["320053","V-COLA CAN (Std) 250ML x 24","CTN","150",""],
+["320055","Krud Soda Can (Std) 250mlx24","CTN","150",""],
+
+["310152","Beer Krud Pilsner CAN (NCP) 330ML x 1","CAN","150",""],
+["310173","Beer Vattanac Premium Light CAN (NCP) 330ML x 1","CAN","150",""],
+["310193","Beer Vattanac Lagerade CAN (NCP) 330ML x 1","CAN","150",""],
+["310201","Beer Krud Lite Premium Can (NCP) 330mlx 1","CAN","150",""],
+["310204","Beer Dragon Premium Dark Silver CAN (NCP) 330ML x 1","CAN","150",""],
+["310211","Beer Vattanac All Malt CAN (NCP) 330ML x 1","CAN","150",""],
+["310218","Vattanac All Free CAN (NCP) 330ML x 1","CAN","150",""],
+["320024","Krud Energy Drink (NCP) 250 ml x 1","CAN","150",""],
+["320025","Krud ICE Energy Drink (NCP) 250 ml x 1","CAN","150",""],
+["321001","Krud COLA Energy Drink (NCP) 250ml x 1","CAN","150",""],
+["321003","Krud Pure Charge Energy Drink (NCP) 250 ml x 1","CAN","150",""],
+["321005","Dragon Energy (NCP) 250ml x 1","CAN","150",""],
+["320028","V-ACTIVE Sports Drink (NCP) 330 sleek x 1","CAN","150",""],
+["320035","V-ACTIVE Sports Yellow (NCP) 330 sleek x 1","CAN","150",""],
+["321007","Red Dragon (NCP) 250 mlx 1","CAN","150",""]
+
+];
+
+
+/* =========================================================
+STORAGE
+========================================================= */
+
+function saveItems(){
+
+    localStorage.setItem(
+        "delivery_items",
+        JSON.stringify(items)
+    );
+
+}
+
+
+function saveDNs(){
+
+    localStorage.setItem(
+        "delivery_notes",
+        JSON.stringify(deliveryNotes)
+    );
+
+}
+
+
+/* =========================================================
+LOAD DEFAULT ITEMS
+========================================================= */
+
+function loadDefaultItems(){
+
+    if(items.length === 0){
+
+        items = defaultItems.map(x => ({
+
+            code:x[0],
+            desc:x[1],
+            uom:x[2],
+            pallet:x[3],
+            remarks:x[4]
+
+        }));
+
+        saveItems();
+
+    }
+
+}
+
+
+/* =========================================================
+TAB
+========================================================= */
+
+function switchTab(tab){
+
+    document.querySelectorAll(".tab-content")
+        .forEach(el => el.classList.remove("active"));
+
+
+    document.getElementById("tab-"+tab)
+        .classList.add("active");
+
+
+    document.querySelectorAll(
+        "#btn-tab-delivery,#btn-tab-items,#btn-tab-report"
+    ).forEach(btn => {
+
+        btn.classList.remove("bg-sky-900");
+        btn.classList.add("bg-sky-600");
+
+    });
+
+
+    const activeButton =
+        document.getElementById("btn-tab-"+tab);
+
+    activeButton.classList.remove("bg-sky-600");
+    activeButton.classList.add("bg-sky-900");
+
+
+    if(tab === "items")
+        renderItemMaster();
+
+
+    if(tab === "report")
+        renderReport();
+
+}
+
+
+/* =========================================================
+ITEM MASTER
+========================================================= */
+
+function renderItemMaster(){
+
+    const tbody =
+        document.getElementById("item-table-body");
+
+
+    const search =
+        document.getElementById("item-search")
+        .value
+        .toLowerCase()
+        .trim();
+
+
+    const filtered = items.filter(item =>
+
+        String(item.code).toLowerCase().includes(search) ||
+
+        String(item.desc).toLowerCase().includes(search) ||
+
+        String(item.uom).toLowerCase().includes(search)
+
+    );
+
+
+    tbody.innerHTML = "";
+
+
+    filtered.forEach(item => {
+
+        const tr = document.createElement("tr");
+
+        tr.className = "hover:bg-sky-50";
+
+
+        tr.innerHTML = `
+
+        <td class="border border-sky-200 p-2 font-bold text-sky-700">
+            ${escapeHTML(item.code)}
+        </td>
+
+        <td class="border border-sky-200 p-2">
+            ${escapeHTML(item.desc)}
+        </td>
+
+        <td class="border border-sky-200 p-2 text-center">
+            ${escapeHTML(item.uom)}
+        </td>
+
+        <td class="border border-sky-200 p-2 text-center">
+            ${escapeHTML(item.pallet || "")}
+        </td>
+
+        <td class="border border-sky-200 p-2">
+            ${escapeHTML(item.remarks || "")}
+        </td>
+
+        <td class="border border-sky-200 p-2">
+
+            <div class="flex gap-1 justify-center">
+
+                <button
+                    onclick="editItem('${escapeAttr(item.code)}')"
+                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded">
+                    ✏️
+                </button>
+
+                <button
+                    onclick="deleteItem('${escapeAttr(item.code)}')"
+                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded">
+                    🗑️
+                </button>
+
+            </div>
+
+        </td>
+
+        `;
+
+        tbody.appendChild(tr);
+
+    });
+
+
+    document.getElementById("item-count")
+        .textContent =
+        filtered.length + " / " + items.length + " Items";
+
+}
+
+
+/* =========================================================
+SAVE ITEM
+========================================================= */
+
+function saveItem(event){
+
+    event.preventDefault();
+
+
+    const code =
+        document.getElementById("item-no").value.trim();
+
+    const desc =
+        document.getElementById("item-desc").value.trim();
+
+    const uom =
+        document.getElementById("item-uom").value.trim();
+
+    const pallet =
+        document.getElementById("item-pallet").value.trim();
+
+    const remarks =
+        document.getElementById("item-remarks").value.trim();
+
+
+    if(!code || !desc || !uom){
+
+        alert(
+            "Please enter Item Code, Description and UOM."
+        );
+
+        return;
+
+    }
+
+
+    const index = items.findIndex(
+        item =>
+        item.code.toLowerCase() === code.toLowerCase()
+    );
+
+
+    const obj = {
+        code,
+        desc,
+        uom,
+        pallet,
+        remarks
+    };
+
+
+    if(index >= 0){
+
+        items[index] = obj;
+
+        alert("Item updated successfully.");
+
+    }else{
+
+        items.push(obj);
+
+        alert("Item added successfully.");
+
+    }
+
+
+    saveItems();
+
+    document.getElementById("item-form").reset();
+
+    renderItemMaster();
+
+}
+
+
+/* =========================================================
+EDIT ITEM
+========================================================= */
+
+function editItem(code){
+
+    const item =
+        items.find(x => x.code === code);
+
+
+    if(!item)
+        return;
+
+
+    document.getElementById("item-no").value =
+        item.code;
+
+    document.getElementById("item-desc").value =
+        item.desc;
+
+    document.getElementById("item-uom").value =
+        item.uom;
+
+    document.getElementById("item-pallet").value =
+        item.pallet || "";
+
+    document.getElementById("item-remarks").value =
+        item.remarks || "";
+
+
+    window.scrollTo({
+        top:0,
+        behavior:"smooth"
+    });
+
+}
+
+
+/* =========================================================
+DELETE ITEM
+========================================================= */
+
+function deleteItem(code){
+
+    if(!confirm(
+        "Are you sure you want to delete Item " +
+        code +
+        "?"
+    ))
+        return;
+
+
+    items =
+        items.filter(item => item.code !== code);
+
+
+    saveItems();
+
+    renderItemMaster();
+
+}
+
+
+/* =========================================================
+IMPORT EXCEL
+========================================================= */
+
+function importItemExcel(){
+
+    const input =
+        document.getElementById("excel-file-input");
+
+
+    if(!input.files.length){
+
+        alert("Please select Excel file.");
+
+        return;
+
+    }
+
+
+    const reader = new FileReader();
+
+
+    reader.onload = function(e){
+
+        try{
+
+            const workbook =
+                XLSX.read(
+                    e.target.result,
+                    {type:"array"}
+                );
+
+
+            const sheet =
+                workbook.Sheets[
+                    workbook.SheetNames[0]
+                ];
+
+
+            const data =
+                XLSX.utils.sheet_to_json(
+                    sheet,
+                    {defval:""}
+                );
+
+
+            if(!data.length){
+
+                alert("Excel file is empty.");
+
+                return;
+
+            }
+
+
+            let count = 0;
+
+
+            data.forEach(row => {
+
+                const code =
+                    String(
+                        row["Item Nº"] ??
+                        row["Item No"] ??
+                        row["Item Code"] ??
+                        row["ITEM NO"] ??
+                        ""
+                    ).trim();
+
+
+                const desc =
+                    String(
+                        row["DESCRIPTION"] ??
+                        row["Description"] ??
+                        ""
+                    ).trim();
+
+
+                const uom =
+                    String(
+                        row["UOM"] ?? ""
+                    ).trim();
+
+
+                const pallet =
+                    String(
+                        row["PALLET STORAGE"] ??
+                        row["Pallet Storage"] ??
+                        ""
+                    ).trim();
+
+
+                const remarks =
+                    String(
+                        row["Remarks"] ??
+                        row["REMARKS"] ??
+                        ""
+                    ).trim();
+
+
+                if(!code || !desc)
+                    return;
+
+
+                const index =
+                    items.findIndex(
+                        item => item.code === code
+                    );
+
+
+                const obj = {
+                    code,
+                    desc,
+                    uom,
+                    pallet,
+                    remarks
+                };
+
+
+                if(index >= 0)
+                    items[index] = obj;
+                else
+                    items.push(obj);
+
+
+                count++;
+
+            });
+
+
+            saveItems();
+
+            renderItemMaster();
+
+            input.value = "";
+
+
+            alert(
+                "Import completed successfully.\n\n" +
+                "Processed Items: " +
+                count
+            );
+
+        }
+        catch(error){
+
+            console.error(error);
+
+            alert(
+                "Cannot read Excel file."
+            );
+
+        }
+
+    };
+
+
+    reader.readAsArrayBuffer(
+        input.files[0]
+    );
+
+}
+
+
+/* =========================================================
+ITEM SEARCH
+========================================================= */
+
+function openItemSearch(){
+
+    currentSearchRow = null;
+
+
+    document.getElementById(
+        "item-search-modal"
+    ).classList.add("active");
+
+
+    document.getElementById(
+        "item-search-modal-input"
+    ).value = "";
+
+
+    searchItemModal();
+
+
+    setTimeout(() => {
+
+        document.getElementById(
+            "item-search-modal-input"
+        ).focus();
+
+    },100);
+
+}
+
+
+function closeItemSearch(){
+
+    document.getElementById(
+        "item-search-modal"
+    ).classList.remove("active");
+
+}
+
+
+function searchItemModal(){
+
+    const search =
+        document.getElementById(
+            "item-search-modal-input"
+        )
+        .value
+        .toLowerCase()
+        .trim();
+
+
+    const tbody =
+        document.getElementById(
+            "item-search-result"
+        );
+
+
+    tbody.innerHTML = "";
+
+
+    const filtered =
+        items.filter(item =>
+
+            item.code.toLowerCase().includes(search) ||
+
+            item.desc.toLowerCase().includes(search) ||
+
+            item.uom.toLowerCase().includes(search)
+
+        );
+
+
+    filtered.forEach(item => {
+
+        const tr =
+            document.createElement("tr");
+
+
+        tr.className =
+            "hover:bg-sky-50";
+
+
+        tr.innerHTML = `
+
+        <td class="border border-sky-200 p-2 font-bold text-sky-700">
+            ${escapeHTML(item.code)}
+        </td>
+
+        <td class="border border-sky-200 p-2">
+            ${escapeHTML(item.desc)}
+        </td>
+
+        <td class="border border-sky-200 p-2 text-center">
+            ${escapeHTML(item.uom)}
+        </td>
+
+        <td class="border border-sky-200 p-2 text-center">
+            ${escapeHTML(item.pallet || "")}
+        </td>
+
+        <td class="border border-sky-200 p-2">
+            ${escapeHTML(item.remarks || "")}
+        </td>
+
+        <td class="border border-sky-200 p-2 text-center">
+
+            <button
+                onclick="selectSearchItem('${escapeAttr(item.code)}')"
+                class="bg-sky-600 hover:bg-sky-700 text-white px-3 py-1 rounded font-bold">
+                Select
+            </button>
+
+        </td>
+
+        `;
+
+
+        tbody.appendChild(tr);
+
+    });
+
+
+    if(!filtered.length){
+
+        tbody.innerHTML = `
+
+        <tr>
+
+            <td
+                colspan="6"
+                class="border border-sky-200 p-5 text-center text-gray-500">
+
+                No Item Found
+
+            </td>
+
+        </tr>
+
+        `;
+
+    }
+
+}
+
+
+function selectSearchItem(code){
+
+    const item =
+        items.find(x => x.code === code);
+
+
+    if(!item)
+        return;
+
+
+    if(currentSearchRow)
+        fillDNRow(currentSearchRow,item);
+
+
+    closeItemSearch();
+
+}
+
+
+/* =========================================================
+DN NUMBER
+========================================================= */
+
+function getNextDNNumber(){
+
+    let max = 0;
+
+
+    deliveryNotes.forEach(dn => {
+
+        const value =
+            String(dn.number || "");
+
+
+        let match =
+            value.match(/26-(\d+)$/);
+
+
+        if(match){
+
+            const number =
+                parseInt(match[1],10);
+
+
+            if(number > max)
+                max = number;
+
+        }
+
+    });
+
+
+    return (
+        "DN Nº 26-" +
+        String(max + 1).padStart(3,"0")
+    );
+
+}
+
+
+/* =========================================================
+PREPARE NEW DN
+========================================================= */
+
+function prepareNewDN(){
+
+    const dn =
+        getNextDNNumber();
+
+
+    document.getElementById(
+        "dn-number"
+    ).value = dn;
+
+
+    document.getElementById(
+        "dn-display-no"
+    ).textContent = dn;
+
+
+    const today =
+        new Date()
+        .toISOString()
+        .split("T")[0];
+
+
+    document.getElementById(
+        "dn-date"
+    ).value = today;
+
+
+    document.getElementById(
+        "dn-items-tbody"
+    ).innerHTML = "";
+
+
+    addDNRow();
+
+}
+
+
+/* =========================================================
+ADD DN ROW
+========================================================= */
+
+function addDNRow(){
+
+    const tbody =
+        document.getElementById(
+            "dn-items-tbody"
+        );
+
+
+    const row =
+        document.createElement("tr");
+
+
+    row.className = "dn-row";
+
+
+    row.innerHTML = `
+
+    <td class="border border-sky-200 p-2 text-center row-number">
+        1
+    </td>
+
+
+    <td class="border border-sky-200 p-2">
+
+        <div class="flex gap-1">
+
+            <input
+                type="text"
+                class="item-code-input w-full border border-sky-200 p-2 rounded-lg text-sm"
+                placeholder="Item Code"
+                oninput="lookupDNItem(this)">
+
+
+            <button
+                type="button"
+                onclick="openDNItemSearch(this)"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 rounded-lg">
+                🔍
+            </button>
+
+        </div>
+
+    </td>
+
+
+    <td class="border border-sky-200 p-2">
+
+        <input
+            type="text"
+            class="item-desc-input w-full border border-sky-200 p-2 rounded-lg text-sm bg-gray-50"
+            readonly
+            placeholder="Description">
+
+    </td>
+
+
+    <td class="border border-sky-200 p-2">
+
+        <input
+            type="text"
+            class="item-uom-input w-full border border-sky-200 p-2 rounded-lg text-sm bg-gray-50"
+            readonly
+            placeholder="UOM">
+
+    </td>
+
+
+    <td class="border border-sky-200 p-2">
+
+        <input
+            type="number"
+            min="0"
+            step="0.01"
+            class="qty-input w-full border border-sky-200 p-2 rounded-lg text-sm"
+            placeholder="0">
+
+    </td>
+
+
+    <td class="border border-sky-200 p-2">
+
+        <input
+            type="text"
+            class="remarks-input w-full border border-sky-200 p-2 rounded-lg text-sm"
+            placeholder="Remarks">
+
+    </td>
+
+
+    <td class="border border-sky-200 p-2 text-center">
+
+        <button
+            type="button"
+            onclick="removeDNRow(this)"
+            class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded">
+            ✕
+        </button>
+
+    </td>
+
+    `;
+
+
+    tbody.appendChild(row);
+
+
+    updateRowNumbers();
+
+}
+
+
+/* =========================================================
+OPEN DN ITEM SEARCH
+========================================================= */
+
+function openDNItemSearch(button){
+
+    currentSearchRow =
+        button.closest("tr");
+
+
+    document.getElementById(
+        "item-search-modal"
+    ).classList.add("active");
+
+
+    document.getElementById(
+        "item-search-modal-input"
+    ).value = "";
+
+
+    searchItemModal();
+
+
+    setTimeout(() => {
+
+        document.getElementById(
+            "item-search-modal-input"
+        ).focus();
+
+    },100);
+
+}
+
+
+/* =========================================================
+LOOKUP ITEM
+========================================================= */
+
+function lookupDNItem(input){
+
+    const row =
+        input.closest("tr");
+
+
+    const code =
+        input.value
+        .trim()
+        .toLowerCase();
+
+
+    const item =
+        items.find(
+            x => x.code.toLowerCase() === code
+        );
+
+
+    if(item){
+
+        fillDNRow(row,item);
+
+    }else{
+
+        row.querySelector(
+            ".item-desc-input"
+        ).value = "";
+
+
+        row.querySelector(
+            ".item-uom-input"
+        ).value = "";
+
+    }
+
+}
+
+
+/* =========================================================
+FILL DN ROW
+========================================================= */
+
+function fillDNRow(row,item){
+
+    row.querySelector(
+        ".item-code-input"
+    ).value = item.code;
+
+
+    row.querySelector(
+        ".item-desc-input"
+    ).value = item.desc;
+
+
+    row.querySelector(
+        ".item-uom-input"
+    ).value = item.uom;
+
+}
+
+
+/* =========================================================
+REMOVE DN ROW
+========================================================= */
+
+function removeDNRow(button){
+
+    const tbody =
+        document.getElementById(
+            "dn-items-tbody"
+        );
+
+
+    const rows =
+        tbody.querySelectorAll(
+            ".dn-row"
+        );
+
+
+    if(rows.length <= 1){
+
+        rows[0].querySelector(
+            ".item-code-input"
+        ).value = "";
+
+
+        rows[0].querySelector(
+            ".item-desc-input"
+        ).value = "";
+
+
+        rows[0].querySelector(
+            ".item-uom-input"
+        ).value = "";
+
+
+        rows[0].querySelector(
+            ".qty-input"
+        ).value = "";
+
+
+        rows[0].querySelector(
+            ".remarks-input"
+        ).value = "";
+
+
+        return;
+
+    }
+
+
+    button.closest("tr").remove();
+
+
+    updateRowNumbers();
+
+}
+
+
+/* =========================================================
+ROW NUMBERS
+========================================================= */
+
+function updateRowNumbers(){
+
+    document.querySelectorAll(
+        ".dn-row"
+    ).forEach((row,index) => {
+
+        row.querySelector(
+            ".row-number"
+        ).textContent =
+            index + 1;
+
+    });
+
+}
+
+
+/* =========================================================
+SAVE DELIVERY NOTE
+========================================================= */
+
+function saveDeliveryNote(printAfter){
+
+    const number =
+        document.getElementById(
+            "dn-number"
+        ).value.trim();
+
+
+    const date =
+        document.getElementById(
+            "dn-date"
+        ).value;
+
+
+    const customer =
+        document.getElementById(
+            "dn-cust-name"
+        ).value.trim();
+
+
+    const address =
+        document.getElementById(
+            "dn-address"
+        ).value.trim();
+
+
+    const phone =
+        document.getElementById(
+            "dn-phone"
+        ).value.trim();
+
+
+    const truck =
+        document.getElementById(
+            "dn-truck"
+        ).value.trim();
+
+
+    if(!customer){
+
+        alert(
+            "Please enter Customer Name."
+        );
+
+        return;
+
+    }
+
+
+    const rows =
+        document.querySelectorAll(
+            ".dn-row"
+        );
+
+
+    const lineItems = [];
+
+
+    rows.forEach(row => {
+
+        const code =
+            row.querySelector(
+                ".item-code-input"
+            ).value.trim();
+
+
+        const desc =
+            row.querySelector(
+                ".item-desc-input"
+            ).value.trim();
+
+
+        const uom =
+            row.querySelector(
+                ".item-uom-input"
+            ).value.trim();
+
+
+        const qty =
+            row.querySelector(
+                ".qty-input"
+            ).value;
+
+
+        const remarks =
+            row.querySelector(
+                ".remarks-input"
+            ).value.trim();
+
+
+        if(code){
+
+            lineItems.push({
+
+                code,
+                desc,
+                uom,
+                qty:Number(qty || 0),
+                remarks
+
+            });
+
+        }
+
+    });
+
+
+    if(!lineItems.length){
+
+        alert(
+            "Please add at least one Item."
+        );
+
+        return;
+
+    }
+
+
+    const dn = {
+
+        id:Date.now(),
+
+        number,
+
+        date,
+
+        customer,
+
+        address,
+
+        phone,
+
+        truck,
+
+        items:lineItems,
+
+        createdAt:
+            new Date().toISOString()
+
+    };
+
+
+    deliveryNotes.push(dn);
+
+
+    saveDNs();
+
+
+    alert(
+        "Delivery Note " +
+        number +
+        " saved successfully."
+    );
+
+
+    if(printAfter)
+        printDeliveryNote(dn);
+
+
+    clearDNForm();
+
+
+    renderReport();
+
+}
+
+
+/* =========================================================
+CLEAR DN
+========================================================= */
+
+function clearDNForm(){
+
+    document.getElementById(
+        "dn-cust-name"
+    ).value = "";
+
+
+    document.getElementById(
+        "dn-address"
+    ).value = "";
+
+
+    document.getElementById(
+        "dn-phone"
+    ).value = "";
+
+
+    document.getElementById(
+        "dn-truck"
+    ).value = "";
+
+
+    prepareNewDN();
+
+}
+
+
+/* =========================================================
+REPORT DATA
+========================================================= */
+
+function getReportRows(){
+
+    const result = [];
+
+
+    deliveryNotes.forEach(dn => {
+
+        dn.items.forEach(item => {
+
+            result.push({
+
+                date:dn.date,
+
+                number:dn.number,
+
+                customer:dn.customer,
+
+                address:dn.address,
+
+                phone:dn.phone,
+
+                truck:dn.truck,
+
+                code:item.code,
+
+                desc:item.desc,
+
+                uom:item.uom,
+
+                qty:item.qty,
+
+                remarks:item.remarks,
+
+                dnId:dn.id
+
+            });
+
+        });
+
+    });
+
+
+    return result;
+
+}
+
+
+/* =========================================================
+REPORT
+========================================================= */
+
+function renderReport(){
+
+    const tbody =
+        document.getElementById(
+            "report-tbody"
+        );
+
+
+    const search =
+        document.getElementById(
+            "report-search"
+        )
+        .value
+        .toLowerCase()
+        .trim();
+
+
+    const allRows =
+        getReportRows();
+
+
+    const filtered =
+        allRows.filter(row =>
+
+            row.number.toLowerCase().includes(search) ||
+
+            row.customer.toLowerCase().includes(search) ||
+
+            row.code.toLowerCase().includes(search) ||
+
+            row.desc.toLowerCase().includes(search) ||
+
+            row.uom.toLowerCase().includes(search)
+
+        );
+
+
+    const pageSize =
+        parseInt(
+            document.getElementById(
+                "report-page-size"
+            ).value
+        );
+
+
+    const totalPages =
+        Math.max(
+            1,
+            Math.ceil(
+                filtered.length / pageSize
+            )
+        );
+
+
+    if(reportPage > totalPages)
+        reportPage = totalPages;
+
+
+    const start =
+        (reportPage - 1) * pageSize;
+
+
+    const pageRows =
+        filtered.slice(
+            start,
+            start + pageSize
+        );
+
+
+    tbody.innerHTML = "";
+
+
+    pageRows.forEach((row,index) => {
+
+        const tr =
+            document.createElement("tr");
+
+
+        tr.className =
+            "hover:bg-sky-50";
+
+
+        tr.innerHTML = `
+
+        <td class="border border-sky-200 p-2 text-center">
+            ${start + index + 1}
+        </td>
+
+
+        <td class="border border-sky-200 p-2">
+            ${escapeHTML(row.date)}
+        </td>
+
+
+        <td class="border border-sky-200 p-2 font-bold text-sky-700">
+            ${escapeHTML(row.number)}
+        </td>
+
+
+        <td class="border border-sky-200 p-2">
+            ${escapeHTML(row.customer)}
+        </td>
+
+
+        <td class="border border-sky-200 p-2 font-bold">
+            ${escapeHTML(row.code)}
+        </td>
+
+
+        <td class="border border-sky-200 p-2">
+            ${escapeHTML(row.desc)}
+        </td>
+
+
+        <td class="border border-sky-200 p-2 text-center">
+            ${escapeHTML(row.uom)}
+        </td>
+
+
+        <td class="border border-sky-200 p-2 text-right font-bold">
+            ${row.qty}
+        </td>
+
+
+        <td class="border border-sky-200 p-2">
+            ${escapeHTML(row.remarks || "")}
+        </td>
+
+
+        <td class="border border-sky-200 p-2">
+
+            <div class="flex gap-1 justify-center">
+
+                <button
+                    onclick="printDNById(${row.dnId})"
+                    title="Print"
+                    class="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded">
+                    🖨️
+                </button>
+
+
+                <button
+                    onclick="deleteDeliveryNote(${row.dnId})"
+                    title="Delete"
+                    class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded">
+                    🗑️
+                </button>
+
+            </div>
+
+        </td>
+
+        `;
+
+
+        tbody.appendChild(tr);
+
+    });
+
+
+    if(!pageRows.length){
+
+        tbody.innerHTML = `
+
+        <tr>
+
+            <td
+                colspan="10"
+                class="border border-sky-200 p-5 text-center text-gray-500">
+
+                No Report Data
+
+            </td>
+
+        </tr>
+
+        `;
+
+    }
+
+
+    document.getElementById(
+        "report-info"
+    ).textContent =
+
+        "Showing " +
+
+        (filtered.length
+            ? start + 1
+            : 0) +
+
+        " - " +
+
+        Math.min(
+            start + pageRows.length,
+            filtered.length
+        ) +
+
+        " of " +
+
+        filtered.length +
+
+        " rows";
+
+
+    document.getElementById(
+        "report-page-label"
+    ).textContent =
+
+        "Page " +
+        reportPage +
+        " / " +
+        totalPages;
+
+}
+
+
+/* =========================================================
+CLEAR REPORT SEARCH
+========================================================= */
+
+function clearReportSearch(){
+
+    document.getElementById(
+        "report-search"
+    ).value = "";
+
+
+    reportPage = 1;
+
+
+    renderReport();
+
+}
+
+
+/* =========================================================
+DELETE DELIVERY NOTE
+========================================================= */
+
+function deleteDeliveryNote(id){
+
+    const dn =
+        deliveryNotes.find(
+            x => x.id === id
+        );
+
+
+    if(!dn){
+
+        alert(
+            "Delivery Note not found."
+        );
+
+        return;
+
+    }
+
+
+    const confirmed =
+        confirm(
+
+            "Are you sure you want to delete:\n\n" +
+
+            dn.number +
+
+            "\nCustomer: " +
+
+            dn.customer +
+
+            "\n\nThis action cannot be undone."
+
+        );
+
+
+    if(!confirmed)
+        return;
+
+
+    deliveryNotes =
+        deliveryNotes.filter(
+            x => x.id !== id
+        );
+
+
+    saveDNs();
+
+
+    renderReport();
+
+
+    alert(
+        dn.number +
+        " deleted successfully."
+    );
+
+}
+
+
+/* =========================================================
+REPORT PAGE
+========================================================= */
+
+function changeReportPage(direction){
+
+    const search =
+        document.getElementById(
+            "report-search"
+        )
+        .value
+        .toLowerCase()
+        .trim();
+
+
+    const rows =
+        getReportRows().filter(row =>
+
+            row.number.toLowerCase().includes(search) ||
+
+            row.customer.toLowerCase().includes(search) ||
+
+            row.code.toLowerCase().includes(search) ||
+
+            row.desc.toLowerCase().includes(search) ||
+
+            row.uom.toLowerCase().includes(search)
+
+        );
+
+
+    const pageSize =
+        parseInt(
+            document.getElementById(
+                "report-page-size"
+            ).value
+        );
+
+
+    const totalPages =
+        Math.max(
+            1,
+            Math.ceil(
+                rows.length / pageSize
+            )
+        );
+
+
+    reportPage += direction;
+
+
+    if(reportPage < 1)
+        reportPage = 1;
+
+
+    if(reportPage > totalPages)
+        reportPage = totalPages;
+
+
+    renderReport();
+
+}
+
+
+/* =========================================================
+EXPORT EXCEL
+========================================================= */
+
+function exportReportToExcel(){
+
+    const rows =
+        getReportRows();
+
+
+    if(!rows.length){
+
+        alert(
+            "No report data to export."
+        );
+
+        return;
+
+    }
+
+
+    const exportData =
+        rows.map((row,index) => ({
+
+            "Nº":index + 1,
+
+            "Date":row.date,
+
+            "DN Nº":row.number,
+
+            "Customer":row.customer,
+
+            "Address":row.address || "",
+
+            "Phone":row.phone || "",
+
+            "Truck Nº":row.truck || "",
+
+            "Item Code":row.code,
+
+            "Description":row.desc,
+
+            "UOM":row.uom,
+
+            "Qty":row.qty,
+
+            "Remarks":row.remarks || ""
+
+        }));
+
+
+    const worksheet =
+        XLSX.utils.json_to_sheet(
+            exportData
+        );
+
+
+    const workbook =
+        XLSX.utils.book_new();
+
+
+    XLSX.utils.book_append_sheet(
+        workbook,
+        worksheet,
+        "Delivery Report"
+    );
+
+
+    XLSX.writeFile(
+        workbook,
+        "VATTANAC_Delivery_Report.xlsx"
+    );
+
+}
+
+
+/* =========================================================
+EXPORT PDF
+========================================================= */
+
+function exportReportToPDF(){
+
+    const rows =
+        getReportRows();
+
+
+    if(!rows.length){
+
+        alert(
+            "No report data to export."
+        );
+
+        return;
+
+    }
+
+
+    const { jsPDF } =
+        window.jspdf;
+
+
+    const doc =
+        new jsPDF({
+            orientation:"landscape",
+            unit:"mm",
+            format:"a4"
+        });
+
+
+    doc.setFontSize(16);
+
+    doc.setTextColor(3,105,161);
+
+    doc.text(
+        "VATTANAC BREWERY CO., LTD",
+        14,
+        14
+    );
+
+
+    doc.setFontSize(12);
+
+    doc.setTextColor(30,41,59);
+
+    doc.text(
+        "Delivery & Inventory Report",
+        14,
+        21
+    );
+
+
+    const body =
+        rows.map((row,index) => [
+
+            index + 1,
+
+            row.date,
+
+            row.number,
+
+            row.customer,
+
+            row.code,
+
+            row.desc,
+
+            row.uom,
+
+            row.qty,
+
+            row.remarks || ""
+
+        ]);
+
+
+    doc.autoTable({
+
+        startY:27,
+
+        head:[[
+
+            "Nº",
+            "Date",
+            "DN Nº",
+            "Customer",
+            "Item Code",
+            "Description",
+            "UOM",
+            "Qty",
+            "Remarks"
+
+        ]],
+
+        body:body,
+
+        theme:"grid",
+
+        styles:{
+
+            fontSize:7,
+
+            cellPadding:2,
+
+            textColor:[30,41,59]
+
+        },
+
+        headStyles:{
+
+            fillColor:[224,242,254],
+
+            textColor:[7,89,133],
+
+            fontStyle:"bold"
+
+        },
+
+        alternateRowStyles:{
+
+            fillColor:[248,250,252]
+
+        }
+
+    });
+
+
+    doc.save(
+        "VATTANAC_Delivery_Report.pdf"
+    );
+
+}
+
+
+/* =========================================================
+PRINT DN BY ID
+========================================================= */
+
+function printDNById(id){
+
+    const dn =
+        deliveryNotes.find(
+            x => x.id === id
+        );
+
+
+    if(!dn){
+
+        alert(
+            "Delivery Note not found."
+        );
+
+        return;
+
+    }
+
+
+    printDeliveryNote(dn);
+
+}
+
+
+/* =========================================================
+PRINT DELIVERY NOTE
+========================================================= */
+
+function printDeliveryNote(dn){
+
+    const printArea =
+        document.getElementById(
+            "saved-print-area"
+        );
+
+
+    let rows = "";
+
+
+    dn.items.forEach((item,index) => {
+
+        rows += `
+
+        <tr>
+
+            <td style="
+                border:1px solid #bae6fd;
+                padding:4px;
+                text-align:center;
+                width:5%;
+            ">
+                ${index + 1}
+            </td>
+
+
+            <td style="
+                border:1px solid #bae6fd;
+                padding:4px;
+                width:14%;
+                font-weight:bold;
+                color:#0369a1;
+            ">
+                ${escapeHTML(item.code)}
+            </td>
+
+
+            <td style="
+                border:1px solid #bae6fd;
+                padding:4px;
+                width:38%;
+            ">
+                ${escapeHTML(item.desc)}
+            </td>
+
+
+            <td style="
+                border:1px solid #bae6fd;
+                padding:4px;
+                text-align:center;
+                width:8%;
+            ">
+                ${escapeHTML(item.uom)}
+            </td>
+
+
+            <td style="
+                border:1px solid #bae6fd;
+                padding:4px;
+                text-align:right;
+                width:10%;
+                font-weight:bold;
+            ">
+                ${item.qty}
+            </td>
+
+
+            <td style="
+                border:1px solid #bae6fd;
+                padding:4px;
+                width:25%;
+            ">
+                ${escapeHTML(item.remarks || "")}
+            </td>
+
+        </tr>
+
+        `;
+
+    });
+
+
+    printArea.innerHTML = `
+
+    <div style="
+        width:100%;
+        font-family:Arial,sans-serif;
+        color:#1e293b;
+        font-size:9px;
+    ">
+
+
+        <!-- HEADER -->
+
+        <div style="
+            border-bottom:3px solid #0284c7;
+            padding-bottom:7px;
+            margin-bottom:8px;
+        ">
+
+
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:flex-start;
+            ">
+
+
+                <div>
+
+                    <div style="
+                        font-size:17px;
+                        font-weight:bold;
+                        color:#075985;
+                    ">
+                        VATTANAC BREWERY CO., LTD
+                    </div>
+
+
+                    <div style="
+                        font-size:11px;
+                        color:#64748b;
+                        margin-top:2px;
+                    ">
+                        Delivery & Inventory System
+                    </div>
+
+                </div>
+
+
+                <div style="
+                    text-align:right;
+                ">
+
+                    <div style="
+                        font-size:16px;
+                        font-weight:bold;
+                        color:#0369a1;
+                    ">
+                        DELIVERY NOTE
+                    </div>
+
+
+                    <div style="
+                        font-size:10px;
+                        margin-top:2px;
+                    ">
+                        ប័ណ្ណដឹកទំនិញ
+                    </div>
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+        <!-- DN INFO -->
+
+        <table style="
+            width:100%;
+            border-collapse:collapse;
+            margin-bottom:10px;
+            background:#f0f9ff;
+        ">
+
+            <tr>
+
+                <td style="
+                    padding:5px;
+                    width:25%;
+                ">
+                    <b style="color:#0369a1">
+                        DN Nº:
+                    </b>
+                    ${escapeHTML(dn.number)}
+                </td>
+
+
+                <td style="
+                    padding:5px;
+                    width:25%;
+                ">
+                    <b style="color:#0369a1">
+                        Date:
+                    </b>
+                    ${escapeHTML(dn.date)}
+                </td>
+
+
+                <td style="
+                    padding:5px;
+                    width:25%;
+                ">
+                    <b style="color:#0369a1">
+                        Phone:
+                    </b>
+                    ${escapeHTML(dn.phone || "")}
+                </td>
+
+
+                <td style="
+                    padding:5px;
+                    width:25%;
+                ">
+                    <b style="color:#0369a1">
+                        Truck Nº:
+                    </b>
+                    ${escapeHTML(dn.truck || "")}
+                </td>
+
+            </tr>
+
+
+            <tr>
+
+                <td colspan="2" style="
+                    padding:5px;
+                ">
+                    <b style="color:#0369a1">
+                        Customer:
+                    </b>
+                    ${escapeHTML(dn.customer)}
+                </td>
+
+
+                <td colspan="2" style="
+                    padding:5px;
+                ">
+                    <b style="color:#0369a1">
+                        Address:
+                    </b>
+                    ${escapeHTML(dn.address || "")}
+                </td>
+
+            </tr>
+
+        </table>
+
+
+        <!-- ITEMS -->
+
+        <table style="
+            width:100%;
+            border-collapse:collapse;
+            font-size:8.5px;
+        ">
+
+            <thead>
+
+                <tr style="
+                    background:#e0f2fe;
+                    color:#075985;
+                ">
+
+                    <th style="
+                        border:1px solid #7dd3fc;
+                        padding:5px;
+                    ">
+                        Nº
+                    </th>
+
+
+                    <th style="
+                        border:1px solid #7dd3fc;
+                        padding:5px;
+                    ">
+                        Item Code
+                    </th>
+
+
+                    <th style="
+                        border:1px solid #7dd3fc;
+                        padding:5px;
+                    ">
+                        Description
+                    </th>
+
+
+                    <th style="
+                        border:1px solid #7dd3fc;
+                        padding:5px;
+                    ">
+                        UOM
+                    </th>
+
+
+                    <th style="
+                        border:1px solid #7dd3fc;
+                        padding:5px;
+                    ">
+                        Qty
+                    </th>
+
+
+                    <th style="
+                        border:1px solid #7dd3fc;
+                        padding:5px;
+                    ">
+                        Remarks
+                    </th>
+
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+                ${rows}
+
+            </tbody>
+
+        </table>
+
+
+        <!-- SIGNATURE -->
+
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            gap:8px;
+            margin-top:55px;
+            font-size:8px;
+        ">
+
+
+            <div style="
+                text-align:center;
+                width:20%;
+            ">
+
+                __________________<br>
+
+                <b>Prepared By WH</b><br>
+
+                រៀបចំដោយ
+
+            </div>
+
+
+            <div style="
+                text-align:center;
+                width:20%;
+            ">
+
+                __________________<br>
+
+                <b>Checked By WH</b><br>
+
+                ពិនិត្យទំនិញដោយ
+
+            </div>
+
+
+            <div style="
+                text-align:center;
+                width:20%;
+            ">
+
+                __________________<br>
+
+                <b>Checked By Security</b><br>
+
+                ពិនិត្យដោយ Security
+
+            </div>
+
+
+            <div style="
+                text-align:center;
+                width:20%;
+            ">
+
+                __________________<br>
+
+                <b>Transporter</b><br>
+
+                អ្នកដឹកជញ្ជូន
+
+            </div>
+
+
+            <div style="
+                text-align:center;
+                width:20%;
+            ">
+
+                __________________<br>
+
+                <b>Received By</b><br>
+
+                ទទួលដោយ
+
+            </div>
+
+
+        </div>
+
+
+        <div style="
+            margin-top:15px;
+            border-top:1px solid #bae6fd;
+            padding-top:4px;
+            text-align:center;
+            color:#64748b;
+            font-size:7px;
+        ">        </div>
+
+
+    </div>
+
+    `;
+
+
+    printArea.classList.remove("hidden");
+
+
+    window.print();
+
+
+    setTimeout(() => {
+
+        printArea.classList.add("hidden");
+
+    },1000);
+
+}
+
+
+/* =========================================================
+ESCAPE HTML
+========================================================= */
+
+function escapeHTML(value){
+
+    return String(value ?? "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+
+}
+
+
+function escapeAttr(value){
+
+    return String(value ?? "")
+        .replace(/\\/g,"\\\\")
+        .replace(/'/g,"\\'");
+
+}
+
+
+/* =========================================================
+ESCAPE MODAL
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    function(e){
+
+        if(e.key === "Escape")
+            closeItemSearch();
+
+    }
+);
+
+
+/* =========================================================
+INITIALIZE
+========================================================= */
+
+loadDefaultItems();
+
+prepareNewDN();
+
+renderItemMaster();
+
+renderReport();
+
+switchTab("delivery");
+
+</script>
+
+</body>
+</html>
